@@ -8,25 +8,23 @@ interface ProjectType {
   projectTypeName: string;
 }
 
-interface ServiceOption {
+interface ServiceSubdivision {
   serviceOptionId: number;
-  serviceId: number;
   optionCode: string;
   optionName: string;
-  description?: string;
-  isAvailableToCustomer: boolean;
-  isActive: boolean;
 }
 
-interface Service {
+interface CatalogService {
   serviceId: number;
-  serviceCategoryId: number;
   serviceName: string;
-  shortDescription?: string;
-  description?: string;
-  isCustomerSelectable: boolean;
-  isActive: boolean;
-  serviceOptions?: ServiceOption[];
+  subdivisions: ServiceSubdivision[];
+}
+
+interface ServiceType {
+  serviceTypeId: number;
+  typeCode: string;
+  typeName: string;
+  services: CatalogService[];
 }
 
 interface SelectedService {
@@ -61,7 +59,8 @@ const initialForm: FormData = {
 
 export default function StartProjectPage() {
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [activeServiceTypeId, setActiveServiceTypeId] = useState<number | null>(null);
 
   const [form, setForm] = useState<FormData>(initialForm);
 
@@ -87,22 +86,22 @@ export default function StartProjectPage() {
       setLoading(true);
       setError("");
 
-      const [projectTypesResponse, servicesResponse] =
+      const [projectTypesResponse, catalogResponse] =
         await Promise.all([
           fetch(`${API_BASE}/ProjectTypes`),
-          fetch(`${API_BASE}/Services`),
+          fetch(`${API_BASE}/ServiceCatalog`),
         ]);
 
       if (!projectTypesResponse.ok) {
         throw new Error("Unable to load project types.");
       }
 
-      if (!servicesResponse.ok) {
-        throw new Error("Unable to load services.");
+      if (!catalogResponse.ok) {
+        throw new Error("Unable to load service catalogue.");
       }
 
       const projectTypesData = await projectTypesResponse.json();
-      const servicesData = await servicesResponse.json();
+      const catalogData = await catalogResponse.json();
 
       setProjectTypes(
         Array.isArray(projectTypesData)
@@ -110,17 +109,43 @@ export default function StartProjectPage() {
           : projectTypesData.value ?? []
       );
 
-      const loadedServices: Service[] = Array.isArray(servicesData)
-        ? servicesData
-        : servicesData.value ?? [];
+      const loadedCatalog: ServiceType[] = Array.isArray(catalogData)
+        ? catalogData
+        : catalogData.value ?? [];
 
-      setServices(
-        loadedServices.filter(
-          (service) =>
-            service.isActive !== false &&
-            service.isCustomerSelectable !== false
+      // Coordination records are internal workflow records. They remain in
+      // the database but are not presented as normal customer-selectable
+      // services or subdivisions.
+      //
+      // The database also contains legacy coordination services under the
+      // DESIGN type (for example Project Coordination, Material Coordination,
+      // Resource Coordination and Quality Coordination). Filter those here
+      // rather than changing the underlying catalogue data.
+      const customerCatalog: ServiceType[] = loadedCatalog
+        .filter(
+          (type) => type.typeCode?.toUpperCase() !== "COORDINATION"
         )
-      );
+        .map((type) => ({
+          ...type,
+          services: (type.services ?? [])
+            .filter(
+              (service) =>
+                !service.serviceName
+                  ?.toUpperCase()
+                  .includes("COORDINATION")
+            )
+            .map((service) => ({
+              ...service,
+              subdivisions: (service.subdivisions ?? []).filter(
+                (option) =>
+                  option.optionCode?.toUpperCase() !== "COORDINATION"
+              ),
+            })),
+        }))
+        .filter((type) => type.services.length > 0);
+
+      setServiceTypes(customerCatalog);
+      setActiveServiceTypeId(customerCatalog[0]?.serviceTypeId ?? null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -142,62 +167,63 @@ export default function StartProjectPage() {
     }));
   }
 
-  function toggleService(serviceId: number) {
+  function toggleService(service: CatalogService) {
     setSelectedServices((current) => {
       const exists = current.some(
-        (item) => item.serviceId === serviceId
+        (item) => item.serviceId === service.serviceId
       );
 
       if (exists) {
         return current.filter(
-          (item) => item.serviceId !== serviceId
+          (item) => item.serviceId !== service.serviceId
         );
       }
+
+      // Most customer-facing services have one subdivision. Select it
+      // automatically so the customer does not have to repeat an internal
+      // classification choice. If a service has multiple subdivisions,
+      // the customer can choose one after selecting the service.
+      const defaultSubdivision =
+        service.subdivisions?.length === 1
+          ? service.subdivisions[0]
+          : undefined;
 
       return [
         ...current,
         {
-          serviceId,
+          serviceId: service.serviceId,
+          serviceOptionId: defaultSubdivision?.serviceOptionId,
         },
       ];
     });
   }
 
-  function selectOption(
-    serviceId: number,
-    serviceOptionId: number
-  ) {
+  function selectOption(serviceId: number, serviceOptionId: number) {
     setSelectedServices((current) =>
       current.map((item) =>
         item.serviceId === serviceId
-          ? {
-              ...item,
-              serviceOptionId,
-            }
+          ? { ...item, serviceOptionId: serviceOptionId || undefined }
           : item
       )
     );
   }
 
-  function updateServiceRequirement(
-    serviceId: number,
-    requirement: string
-  ) {
+  function updateServiceRequirement(serviceId: number, requirement: string) {
     setSelectedServices((current) =>
       current.map((item) =>
-        item.serviceId === serviceId
-          ? {
-              ...item,
-              requirement,
-            }
-          : item
+        item.serviceId === serviceId ? { ...item, requirement } : item
       )
     );
   }
 
   function getSelectedService(serviceId: number) {
-    return selectedServices.find(
-      (item) => item.serviceId === serviceId
+    return selectedServices.find((item) => item.serviceId === serviceId);
+  }
+
+  function getActiveServices() {
+    return (
+      serviceTypes.find((type) => type.serviceTypeId === activeServiceTypeId)
+        ?.services ?? []
     );
   }
 
@@ -619,156 +645,142 @@ export default function StartProjectPage() {
               ==================================== */}
 
               <div className="form-section">
-
                 <div className="form-section-heading">
                   <span>03</span>
-
                   <div>
                     <h2>What Do You Need?</h2>
                     <p>
-                      Select one or more services.
-                      You can choose exactly what you need.
+                      Choose a service type, select the services you need,
+                      and tell us anything specific about each one.
                     </p>
                   </div>
                 </div>
 
+                <div className="service-type-tabs">
+                  {serviceTypes.map((type) => (
+                    <button
+                      key={type.serviceTypeId}
+                      type="button"
+                      className={
+                        activeServiceTypeId === type.serviceTypeId
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => setActiveServiceTypeId(type.serviceTypeId)}
+                    >
+                      {type.typeName}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="service-selection-help">
+                  <span>Step 1</span>
+                  <p>Select one or more services you need. Selected services will open additional details below.</p>
+                </div>
+
                 <div className="customer-service-grid">
-
-                  {services.map((service) => {
-
-                    const selected =
-                      getSelectedService(
-                        service.serviceId
-                      );
+                  {getActiveServices().map((service) => {
+                    const selected = getSelectedService(service.serviceId);
+                    const subdivisions = service.subdivisions ?? [];
+                    const selectedSubdivision = subdivisions.find(
+                      (option) =>
+                        option.serviceOptionId === selected?.serviceOptionId
+                    );
 
                     return (
                       <div
                         className={`customer-service-card ${
-                          selected
-                            ? "selected"
-                            : ""
+                          selected ? "selected" : ""
                         }`}
                         key={service.serviceId}
                       >
-
                         <button
                           type="button"
                           className="service-select-button"
-                          onClick={() =>
-                            toggleService(
-                              service.serviceId
-                            )
-                          }
+                          onClick={() => toggleService(service)}
+                          aria-pressed={Boolean(selected)}
                         >
-
                           <span className="service-check">
                             {selected ? "✓" : ""}
                           </span>
-
-                          <span>
+                          <span className="service-name">
                             {service.serviceName}
                           </span>
-
                         </button>
 
-                        {service.shortDescription && (
-                          <p>
-                            {service.shortDescription}
-                          </p>
-                        )}
+                        {selected && (
+                          <div className="service-details">
+                            <div className="service-detail-heading">
+                              <span>Step 2</span>
+                              <strong>Service subdivision</strong>
+                            </div>
 
-                        {selected &&
-                          service.serviceOptions &&
-                          service.serviceOptions.filter(
-                            (option) =>
-                              option.isActive &&
-                              option.isAvailableToCustomer
-                          ).length > 0 && (
-
-                            <div className="service-option-area">
-
-                              <label>
-                                Requirement Type
-                              </label>
-
+                            {subdivisions.length === 1 ? (
+                              <div className="service-subdivision-display">
+                                {selectedSubdivision?.optionName ??
+                                  subdivisions[0].optionName}
+                              </div>
+                            ) : subdivisions.length > 1 ? (
                               <select
-                                value={
-                                  selected.serviceOptionId ??
-                                  ""
-                                }
+                                className="service-subdivision-select"
+                                aria-label={`Subdivision for ${service.serviceName}`}
+                                value={selected.serviceOptionId ?? ""}
                                 onChange={(e) =>
                                   selectOption(
                                     service.serviceId,
-                                    Number(
-                                      e.target.value
-                                    )
+                                    Number(e.target.value)
                                   )
                                 }
                               >
-
                                 <option value="">
-                                  Select if applicable
+                                  Select a subdivision
                                 </option>
-
-                                {service.serviceOptions
-                                  .filter(
-                                    (option) =>
-                                      option.isActive &&
-                                      option.isAvailableToCustomer
-                                  )
-                                  .map((option) => (
-
-                                    <option
-                                      key={
-                                        option.serviceOptionId
-                                      }
-                                      value={
-                                        option.serviceOptionId
-                                      }
-                                    >
-                                      {option.optionName}
-                                    </option>
-
-                                  ))}
-
+                                {subdivisions.map((option) => (
+                                  <option
+                                    key={option.serviceOptionId}
+                                    value={option.serviceOptionId}
+                                  >
+                                    {option.optionName}
+                                  </option>
+                                ))}
                               </select>
+                            ) : (
+                              <div className="service-subdivision-display muted">
+                                We will discuss the appropriate service
+                                arrangement with you.
+                              </div>
+                            )}
 
+                            <div className="service-detail-heading requirement-heading">
+                              <span>Step 3</span>
+                              <strong>Specific requirement</strong>
                             </div>
 
-                          )}
-
-                        {selected && (
-
-                          <div className="service-requirement">
-
-                            <label>
-                              Specific requirement
-                            </label>
-
                             <textarea
-                              value={
-                                selected.requirement ?? ""
-                              }
+                              className="service-requirement-input"
+                              value={selected.requirement ?? ""}
                               onChange={(e) =>
                                 updateServiceRequirement(
                                   service.serviceId,
                                   e.target.value
                                 )
                               }
-                              placeholder="Anything specific you want us to know?"
+                              placeholder={`Tell us anything specific about ${service.serviceName.toLowerCase()}...`}
                               rows={3}
                             />
-
                           </div>
-
                         )}
-
                       </div>
                     );
                   })}
-
                 </div>
 
+                {selectedServices.length > 0 && (
+                  <div className="selected-services-summary">
+                    <strong>{selectedServices.length} service(s) selected</strong>
+                    <span> You can select services from more than one category.</span>
+                  </div>
+                )}
               </div>
 
               {/* ====================================
