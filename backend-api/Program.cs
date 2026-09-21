@@ -1,4 +1,4 @@
-﻿using backend_api.Data;
+using backend_api.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,17 +10,19 @@ builder.Services.AddDbContext<AVADesignServicesDbContext>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AdminPortal", policy =>
+    options.AddPolicy("CustomerWeb", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
 
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -33,11 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AdminPortal");
-
+app.UseCors("CustomerWeb");
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
