@@ -435,3 +435,164 @@
   }
 
 }
+
+/* Service type -> service selection */
+.service-type-tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:24px; }
+.service-type-tabs button { border:1px solid #d9dde5; background:#fff; color:#344054; border-radius:999px; padding:10px 16px; font:inherit; cursor:pointer; transition:all .2s ease; }
+.service-type-tabs button:hover { border-color:#9aa4b2; }
+.service-type-tabs button.active { background:#111827; border-color:#111827; color:#fff; }
+.selected-services-summary { margin-top:20px; padding:14px 16px; border:1px solid #e5e7eb; border-radius:10px; background:#f8fafc; color:#475467; }
+.selected-services-summary strong { color:#111827; }
+
+
+/* ==========================================
+   SERVICE SELECTION UX
+   ========================================== */
+
+.service-selection-help {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #6f6877;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.service-selection-help > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #f0e9ff;
+  color: #6d28d9;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.service-selection-help p {
+  margin: 0;
+}
+
+.customer-service-card {
+  padding: 15px 16px;
+}
+
+.customer-service-card.selected {
+  box-shadow: 0 6px 18px rgba(91, 45, 130, .08);
+}
+
+.service-select-button {
+  min-height: 28px;
+}
+
+.service-name {
+  line-height: 1.35;
+}
+
+.service-details {
+  margin: 15px 0 0 32px;
+  padding-top: 14px;
+  border-top: 1px solid #ebe4f2;
+  display: grid;
+  gap: 8px;
+}
+
+.service-detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+
+.service-detail-heading span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 19px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f4effc;
+  color: #6d28d9;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.service-detail-heading strong {
+  color: #49414f;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.requirement-heading {
+  margin-top: 8px;
+}
+
+.service-subdivision-display,
+.service-subdivision-select,
+.service-requirement-input {
+  width: 100%;
+  border: 1px solid #ddd6e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #29232e;
+  font: inherit;
+  font-size: 10px;
+  box-sizing: border-box;
+}
+
+.service-subdivision-display {
+  min-height: 37px;
+  display: flex;
+  align-items: center;
+  padding: 9px 10px;
+  background: #faf8fd;
+  color: #4d4057;
+  font-weight: 700;
+}
+
+.service-subdivision-display.muted {
+  color: #817889;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.service-subdivision-select {
+  padding: 9px 10px;
+  outline: none;
+}
+
+.service-subdivision-select:focus,
+.service-requirement-input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, .08);
+  outline: none;
+}
+
+.service-requirement-input {
+  resize: vertical;
+  min-height: 72px;
+  padding: 10px;
+}
+
+@media (max-width: 760px) {
+  .customer-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-details {
+    margin-left: 0;
+  }
+
+  .service-selection-help {
+    align-items: flex-start;
+  }
+}
