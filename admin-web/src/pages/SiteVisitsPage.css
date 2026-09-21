@@ -1,0 +1,242 @@
+
+.site-form-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #4d4055;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.site-form-control {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 43px;
+  border: 1px solid #ddd5e6;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #302438;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.site-form-control:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+
+.site-form-textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.site-meta-label {
+  color: #95879e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.site-meta-value {
+  color: #302438;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.site-error-banner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #fff3f3;
+  border: 1px solid #f0cccc;
+  color: #a33b3b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.site-view-button {
+  border: 1px solid #ddd5e6;
+  background: #fff;
+  color: #6d28d9;
+  border-radius: 7px;
+  padding: 7px 11px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.site-view-button:hover {
+  border-color: #8b5cf6;
+  background: #faf7ff;
+}
+
+.site-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(24, 16, 34, 0.48);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.site-drawer {
+  width: min(560px, 94vw);
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: #fff;
+  box-shadow: -12px 0 40px rgba(34, 20, 52, 0.18);
+  padding: 28px;
+}
+
+.site-drawer-wide {
+  width: min(760px, 96vw);
+}
+
+.site-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.site-drawer-kicker {
+  font-size: 10px;
+  color: #806f91;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.site-drawer-header h2 {
+  margin: 7px 0 5px;
+  color: #20152c;
+  font-size: 23px;
+}
+
+.site-drawer-header p {
+  margin: 0;
+  color: #7b6d83;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.site-close-button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid #e5deeb;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  color: #65576e;
+  font-size: 18px;
+}
+
+.site-form-grid {
+  display: grid;
+  gap: 17px;
+}
+
+.site-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.site-empty-note {
+  padding: 18px;
+  border-radius: 10px;
+  background: #f9f7fc;
+  color: #6d6173;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.site-lead-summary {
+  padding: 12px 14px;
+  border: 1px solid #eee8f5;
+  border-radius: 10px;
+  background: #fbfaff;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.site-detail-top {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #eee8f5;
+  border-radius: 10px;
+  background: #fbfaff;
+  margin-bottom: 22px;
+}
+
+.site-detail-top > div {
+  min-width: 0;
+}
+
+.site-detail-top span {
+  display: block;
+  color: #95879e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.site-detail-top strong {
+  color: #302438;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.site-detail-section {
+  margin-bottom: 22px;
+}
+
+.site-section-title {
+  color: #302438;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.site-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #eee8f5;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.site-detail-actions {
+  border-top: 1px solid #eee8f5;
+  margin-top: 10px;
+  padding-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .site-detail-top {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-drawer,
+  .site-drawer-wide {
+    width: 100%;
+  }
+}

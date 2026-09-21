@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+
+# Node
+node_modules/
+
+# Frontend builds
+dist/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store
