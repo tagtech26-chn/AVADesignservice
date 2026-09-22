@@ -417,6 +417,64 @@ function SiteVisitsPage() {
         )}
       </div>
 
+      {eligibleLeads.length > 0 && (
+        <div className="leads-panel" style={{ marginTop: "18px" }}>
+          <div style={{ padding: "18px 20px 10px" }}>
+            <h3 style={{ margin: 0, fontSize: "16px" }}>Pending Site Visits</h3>
+            <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: "13px" }}>
+              Customer enquiries that are ready to be scheduled for a site visit.
+            </p>
+          </div>
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Lead</th>
+                  <th>Customer</th>
+                  <th>Location</th>
+                  <th>Lead Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {eligibleLeads.map((lead) => (
+                  <tr key={lead.leadId}>
+                    <td><strong className="lead-code">{lead.leadCode}</strong></td>
+                    <td>
+                      <div className="table-customer">
+                        <div className="table-avatar">{lead.customerName.charAt(0).toUpperCase()}</div>
+                        <div>
+                          <strong>{lead.customerName}</strong>
+                          <span>{lead.companyName || "-"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{lead.location || "-"}</td>
+                    <td>
+                      <span className="lead-status-badge status-site">
+                        {displayStatus(lead.status)}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="site-view-button"
+                        onClick={() => {
+                          setLeadId(String(lead.leadId));
+                          openScheduleForm();
+                        }}
+                      >
+                        Schedule
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div className="site-overlay" onClick={closeScheduleForm}>
           <aside className="site-drawer" onClick={(event) => event.stopPropagation()}>
