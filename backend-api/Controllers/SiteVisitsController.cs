@@ -273,43 +273,98 @@ public async Task<IActionResult> UpdateSiteVisitStatus(
                     $"Active user {request.AssignedToUserId.Value} was not found.");
         }
 
-        var siteVisit = new SiteVisit
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
         {
-            LeadId = request.LeadId,
-            ProjectId = request.ProjectId,
-            AssignedToUserId = request.AssignedToUserId,
+            Lead? lead = null;
 
-            ScheduledAt = request.ScheduledAt,
-
-            Status = string.IsNullOrWhiteSpace(request.Status)
-                ? "SCHEDULED"
-                : request.Status.Trim(),
-
-            SiteCondition = request.SiteCondition,
-            Measurements = request.Measurements,
-            CustomerNotes = request.CustomerNotes,
-            InternalNotes = request.InternalNotes,
-
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
-
-        _context.SiteVisits.Add(siteVisit);
-
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(
-            nameof(GetSiteVisit),
-            new { id = siteVisit.SiteVisitId },
-            new
+            if (request.LeadId.HasValue)
             {
-                siteVisitId = siteVisit.SiteVisitId,
-                leadId = siteVisit.LeadId,
-                projectId = siteVisit.ProjectId,
-                assignedToUserId = siteVisit.AssignedToUserId,
-                scheduledAt = siteVisit.ScheduledAt,
-                status = siteVisit.Status,
-                createdAt = siteVisit.CreatedAt
-            });
+                lead = await _context.Leads
+                    .FirstOrDefaultAsync(l => l.LeadId == request.LeadId.Value);
+
+                if (lead == null)
+                {
+                    return BadRequest(
+                        $"Lead {request.LeadId.Value} was not found.");
+                }
+
+                var leadStatus = lead.Status.ToUpperInvariant();
+
+                if (leadStatus is not "CONTACTED"
+                    and not "SITE_VISIT_REQUIRED"
+                    and not "SITE_VISIT_SCHEDULED")
+                {
+                    return BadRequest(
+                        $"Lead {lead.LeadCode} cannot be scheduled for a Site Visit from status '{lead.Status}'.");
+                }
+
+                var activeVisitExists = await _context.SiteVisits
+                    .AnyAsync(v =>
+                        v.LeadId == lead.LeadId &&
+                        (v.Status == "SCHEDULED" || v.Status == "IN_PROGRESS"));
+
+                if (activeVisitExists)
+                {
+                    return Conflict(
+                        $"Lead {lead.LeadCode} already has an active Site Visit.");
+                }
+            }
+
+            var siteVisit = new SiteVisit
+            {
+                LeadId = request.LeadId,
+                ProjectId = request.ProjectId,
+                AssignedToUserId = request.AssignedToUserId,
+
+                ScheduledAt = request.ScheduledAt,
+
+                Status = string.IsNullOrWhiteSpace(request.Status)
+                    ? "SCHEDULED"
+                    : request.Status.Trim().ToUpperInvariant(),
+
+                SiteCondition = request.SiteCondition,
+                Measurements = request.Measurements,
+                CustomerNotes = request.CustomerNotes,
+                InternalNotes = request.InternalNotes,
+
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+
+            _context.SiteVisits.Add(siteVisit);
+
+            // Scheduling the Site Visit also moves the Lead into
+            // SITE_VISIT_SCHEDULED. The two changes are committed together.
+            if (lead != null)
+            {
+                lead.Status = "SITE_VISIT_SCHEDULED";
+                lead.UpdatedAt = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return CreatedAtAction(
+                nameof(GetSiteVisit),
+                new { id = siteVisit.SiteVisitId },
+                new
+                {
+                    siteVisitId = siteVisit.SiteVisitId,
+                    leadId = siteVisit.LeadId,
+                    projectId = siteVisit.ProjectId,
+                    assignedToUserId = siteVisit.AssignedToUserId,
+                    scheduledAt = siteVisit.ScheduledAt,
+                    status = siteVisit.Status,
+                    createdAt = siteVisit.CreatedAt
+                });
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
