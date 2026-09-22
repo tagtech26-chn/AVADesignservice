@@ -78,7 +78,7 @@ function SiteVisitsPage() {
 
     return leads.filter(
       (lead) =>
-        ["CONTACTED", "SITE_VISIT_REQUIRED", "SITE_VISIT"].includes(
+        ["CONTACTED", "SITE_VISIT_REQUIRED", "SITE_VISIT", "SITE_VISIT_SCHEDULED"].includes(
           lead.status.toUpperCase()
         ) && !leadIdsWithVisit.has(lead.leadId)
     );
