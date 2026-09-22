@@ -15,7 +15,7 @@ function QuotationsPage(){
  const [quotationDate,setQuotationDate]=useState(new Date().toISOString().slice(0,10)),[validUntil,setValidUntil]=useState(defaultValidUntil());
  const [notes,setNotes]=useState(""),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[showForm,setShowForm]=useState(false),[error,setError]=useState("");
 
- async function load(){try{setLoading(true);setError("");const [qs,ls]=await Promise.all([api.getQuotations(),api.getLeads()]);setQuotations(qs);const leads=Array.isArray(ls)?ls:(ls&&Array.isArray(ls.value)?ls.value:[]);setQualifiedLeads(leads.filter(l=>String(l.status||"").trim().toUpperCase()==="QUALIFIED"));}catch(e){setError(e instanceof Error?e.message:"Unable to load quotations.");}finally{setLoading(false);}}
+ async function load(){try{setLoading(true);setError("");const [qs,ls]=await Promise.all([api.getQuotations(),api.getLeads()]);setQuotations(qs);const leads: Lead[]=ls;setQualifiedLeads(leads.filter(l=>String(l.status||"").trim().toUpperCase()==="QUALIFIED"));}catch(e){setError(e instanceof Error?e.message:"Unable to load quotations.");}finally{setLoading(false);}}
  useEffect(()=>{load();},[]);
 
  const selectedLead=qualifiedLeads.find(l=>l.leadId===Number(selectedLeadId));
