@@ -421,6 +421,22 @@ if (status.StatusCode == "CONVERTED" &&
         "A lead cannot be marked as Converted until it is linked to a project.");
 }
 
+// A lead can be moved to SITE_VISIT_SCHEDULED only when
+// an actual active Site Visit has been created.
+if (status.StatusCode == "SITE_VISIT_SCHEDULED")
+{
+    var scheduledSiteVisitExists = await _context.SiteVisits
+        .AnyAsync(v =>
+            v.LeadId == lead.LeadId &&
+            (v.Status == "SCHEDULED" || v.Status == "IN_PROGRESS"));
+
+    if (!scheduledSiteVisitExists)
+    {
+        return BadRequest(
+            "A lead cannot be marked as Site Visit Scheduled until a Site Visit has been scheduled.");
+    }
+}
+
 // A lead can be qualified only after a completed Site Visit.
 if (status.StatusCode == "QUALIFIED")
 {
