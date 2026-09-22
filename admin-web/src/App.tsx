@@ -4,6 +4,7 @@ import "./App.css";
 import { api } from "./services/api";
 import LeadsPage from "./pages/LeadsPage";
 import SiteVisitsPage from "./pages/SiteVisitsPage";
+import QuotationsPage from "./pages/QuotationsPage";
 
 import type {
   Lead,
@@ -368,6 +369,10 @@ function App() {
         ) : activeMenu === "Site Visits" ? (
 
           <SiteVisitsPage />
+
+        ) : activeMenu === "Quotations" ? (
+
+          <QuotationsPage />
 
         ) : (
 
