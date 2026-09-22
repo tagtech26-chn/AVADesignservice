@@ -77,6 +77,31 @@ export interface Quotation {
   itemCount?: number;
 }
 
+export interface CreateQuotationItemRequest {
+  projectServiceId?: number | null;
+  itemType: string;
+  description: string;
+  quantity?: number | null;
+  unit?: string | null;
+  unitPrice: number;
+  discountAmount: number;
+  taxPercent: number;
+  notes?: string | null;
+  displayOrder: number;
+}
+
+export interface CreateQuotationRequest {
+  leadId?: number | null;
+  projectId?: number | null;
+  quotationDate?: string | null;
+  validUntil?: string | null;
+  discountAmount?: number;
+  taxAmount?: number;
+  notes?: string | null;
+  createdByUserId?: number | null;
+  items: CreateQuotationItemRequest[];
+}
+
 export interface ProjectTask {
   projectTaskId: number;
   projectId: number;
@@ -320,6 +345,49 @@ export const api = {
 
   getQuotations: () =>
     apiGetCollection<Quotation>("/Quotations"),
+
+  createQuotation: async (
+    request: CreateQuotationRequest
+  ): Promise<Quotation> => {
+    const response = await fetch(`${API_BASE_URL}/Quotations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message || `Unable to create quotation (${response.status}).`
+      );
+    }
+
+    return response.json();
+  },
+
+  updateQuotationStatus: async (
+    quotationId: number,
+    status: string
+  ) => {
+    const response = await fetch(
+      `${API_BASE_URL}/Quotations/${quotationId}/status`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        message ||
+          `Unable to update quotation status (${response.status}).`
+      );
+    }
+
+    return response.json();
+  },
 
   getProjectTasks: (projectId: number) =>
     apiGetCollection<ProjectTask>(
