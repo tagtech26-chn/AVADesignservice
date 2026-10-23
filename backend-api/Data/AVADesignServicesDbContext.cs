@@ -899,6 +899,7 @@ public partial class AVADesignServicesDbContext : DbContext
             entity.HasIndex(e => new { e.ProjectId, e.ScheduledAt }, "IX_SiteVisits_Project");
 
             entity.Property(e => e.CompletedAt).HasPrecision(0);
+            entity.Property(e => e.InspectionDataJson).HasColumnType("nvarchar(max)");
             entity.Property(e => e.CreatedAt)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysdatetime())");
