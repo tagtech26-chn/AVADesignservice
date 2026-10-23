@@ -6,6 +6,8 @@ public class UpdateSiteVisitDetailsRequest
 
     public string? Measurements { get; set; }
 
+    public string? InspectionDataJson { get; set; }
+
     public string? CustomerNotes { get; set; }
 
     public string? InternalNotes { get; set; }
