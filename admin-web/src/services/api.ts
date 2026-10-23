@@ -134,6 +134,7 @@ export interface SiteVisit {
   status: string;
   siteCondition?: string | null;
   measurements?: string | null;
+  inspectionDataJson?: string | null;
   customerNotes?: string | null;
   internalNotes?: string | null;
   createdAt?: string | null;
@@ -315,6 +316,7 @@ export const api = {
     request: {
       siteCondition?: string | null;
       measurements?: string | null;
+      inspectionDataJson?: string | null;
       customerNotes?: string | null;
       internalNotes?: string | null;
     }
