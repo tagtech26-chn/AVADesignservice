@@ -29,9 +29,72 @@ function SiteVisitsPage() {
 
   const [siteCondition, setSiteCondition] = useState("");
   const [measurements, setMeasurements] = useState("");
+  const [inspectionResponses, setInspectionResponses] = useState<Record<string, string>>({});
   const [detailsCustomerNotes, setDetailsCustomerNotes] = useState("");
   const [detailsInternalNotes, setDetailsInternalNotes] = useState("");
   const [detailError, setDetailError] = useState("");
+
+  const inspectionQuestions = useMemo(() => {
+    const lead = selectedVisit?.leadId
+      ? leads.find((item) => item.leadId === selectedVisit.leadId)
+      : undefined;
+    const source = [
+      lead?.projectType || "",
+      lead?.requirement || "",
+      ...(lead?.services || []).flatMap((service) => [
+        service.serviceName || "",
+        service.optionName || "",
+        service.requirement || "",
+      ]),
+    ].join(" ").toLowerCase();
+
+    type InspectionQuestion = { key: string; label: string; options?: string[]; hint?: string };
+    const common: InspectionQuestion[] = [
+      { key: "scopeConfirmed", label: "Scope of work confirmed with customer?", options: ["Yes", "No", "Partially"] },
+      { key: "priorityAreas", label: "Areas / rooms / work zones included", hint: "List each area and what the customer wants done." },
+      { key: "existingCondition", label: "Existing condition and defects", hint: "Cracks, dampness, uneven surfaces, damage or other constraints." },
+      { key: "accessConstraints", label: "Site access, working hours and restrictions", hint: "Access, parking, working-hour limits or occupied premises." },
+      { key: "materialsPreferences", label: "Customer material, finish and design preferences", hint: "Record confirmed preferences; write 'To confirm' if undecided." },
+      { key: "targetDate", label: "Required completion date / target timeline" },
+      { key: "pendingInfo", label: "Missing information or customer decisions", hint: "Record unknowns rather than assuming answers." },
+    ];
+    const floor: InspectionQuestion[] = [
+      { key: "floorArea", label: "Floor area to cover (include unit)", hint: "Record area per room and unit." },
+      { key: "floorSubstrate", label: "Existing floor / substrate and level condition" },
+      { key: "tileSizeFinish", label: "Preferred tile / surface size, finish and pattern" },
+      { key: "skirting", label: "Skirting, thresholds and edge details" },
+      { key: "floorPrep", label: "Removal, levelling or waterproofing required?", options: ["Yes", "No", "To be assessed"] },
+    ];
+    const interior: InspectionQuestion[] = [
+      { key: "roomDimensions", label: "Room-wise dimensions and ceiling height", hint: "Record length × width × height per room; include openings and columns." },
+      { key: "furnitureJoinery", label: "Furniture, storage and joinery requirements" },
+      { key: "lighting", label: "Lighting, switches and electrical constraints" },
+      { key: "ceiling", label: "Ceiling type, height and ceiling-work requirements" },
+    ];
+    const civil: InspectionQuestion[] = [
+      { key: "structure", label: "Structural elements and visible defects", hint: "Record visible issues; refer structural concerns to a qualified professional." },
+      { key: "levels", label: "Floor levels, wall dimensions and openings" },
+      { key: "civilWork", label: "Demolition, masonry, plastering or repair scope" },
+    ];
+    const electrical: InspectionQuestion[] = [
+      { key: "electricalPoints", label: "Existing and proposed electrical points" },
+      { key: "panel", label: "Distribution board / panel and load details to verify" },
+      { key: "cableRoutes", label: "Cable routes, access and safety constraints" },
+    ];
+    const plumbing: InspectionQuestion[] = [
+      { key: "plumbingPoints", label: "Existing and proposed water / drainage points" },
+      { key: "waterproofing", label: "Wet areas and waterproofing requirements" },
+      { key: "pipeRoutes", label: "Pipe routes, access and leakage observations" },
+    ];
+    const questions = [...common];
+    if (/floor|tile|tiling|stone|marble|granite|surface|skirting/.test(source)) questions.push(...floor);
+    if (/interior|furniture|wardrobe|kitchen|living|bedroom|ceiling|design/.test(source)) questions.push(...interior);
+    if (/civil|construction|architecture|architect|masonry|renovation|structural/.test(source)) questions.push(...civil);
+    if (/electrical|lighting|wiring|switch|power/.test(source)) questions.push(...electrical);
+    if (/plumb|bathroom|toilet|drain|waterproof|water supply/.test(source)) questions.push(...plumbing);
+    if (questions.length === common.length) questions.push({ key: "technicalDetails", label: "Service-specific technical specifications", hint: "Record relevant dimensions, materials, constraints and verification points for this enquiry." });
+    return questions;
+  }, [selectedVisit, leads]);
 
   useEffect(() => {
     loadPage();
@@ -175,6 +238,12 @@ function SiteVisitsPage() {
     setDetailError("");
     setSiteCondition(visit.siteCondition || "");
     setMeasurements(visit.measurements || "");
+    try {
+      const parsed = visit.inspectionDataJson ? JSON.parse(visit.inspectionDataJson) : {};
+      setInspectionResponses(parsed.responses && typeof parsed.responses === "object" ? parsed.responses : {});
+    } catch {
+      setInspectionResponses({});
+    }
     setDetailsCustomerNotes(visit.customerNotes || "");
     setDetailsInternalNotes(visit.internalNotes || "");
     setShowDetails(true);
@@ -266,6 +335,7 @@ function SiteVisitsPage() {
         {
           siteCondition: siteCondition.trim() || null,
           measurements: measurements.trim() || null,
+          inspectionDataJson: JSON.stringify({ version: 1, responses: inspectionResponses }),
           customerNotes: detailsCustomerNotes.trim() || null,
           internalNotes: detailsInternalNotes.trim() || null,
         }
@@ -593,6 +663,40 @@ function SiteVisitsPage() {
             </div>
 
             <div className="site-detail-section">
+              <div className="site-section-title">Customer-Specific Inspection Checklist</div>
+              <p className="site-inspection-help">
+                Suggested from the lead's project type, service names and enquiry text.
+                Confirm answers on site; record “To confirm” rather than guessing.
+              </p>
+              <div className="site-inspection-grid">
+                {inspectionQuestions.map((question) => (
+                  <label key={question.key} className="site-inspection-field">
+                    <span className="site-form-label">{question.label}</span>
+                    {question.options ? (
+                      <select
+                        value={inspectionResponses[question.key] || ""}
+                        onChange={(event) => setInspectionResponses((current) => ({ ...current, [question.key]: event.target.value }))}
+                        disabled={saving || selectedStatus === "COMPLETED"}
+                        className="site-form-control"
+                      >
+                        <option value="">Select response</option>
+                        {question.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    ) : (
+                      <textarea
+                        value={inspectionResponses[question.key] || ""}
+                        onChange={(event) => setInspectionResponses((current) => ({ ...current, [question.key]: event.target.value }))}
+                        disabled={saving || selectedStatus === "COMPLETED"}
+                        className="site-form-control site-form-textarea"
+                        placeholder={question.hint || "Enter verified details"}
+                        rows={3}
+                      />
+                    )}
+                    {question.hint && <small>{question.hint}</small>}
+                  </label>
+                ))}
+              </div>
+
               <div className="site-section-title">Site Assessment</div>
               <div className="site-form-grid">
                 <label>
