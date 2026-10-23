@@ -70,27 +70,48 @@ function SiteVisitsPage() {
   }
 
   const eligibleLeads = useMemo(() => {
-    const leadIdsWithVisit = new Set(
+    const leadIdsWithActiveVisit = new Set(
       siteVisits
-        .filter((visit) => visit.leadId)
+        .filter(
+          (visit) =>
+            visit.leadId &&
+            ["SCHEDULED", "IN_PROGRESS"].includes(
+              visit.status.toUpperCase()
+            )
+        )
         .map((visit) => Number(visit.leadId))
     );
 
     return leads.filter(
       (lead) =>
-        ["CONTACTED", "SITE_VISIT_REQUIRED", "SITE_VISIT", "SITE_VISIT_SCHEDULED"].includes(
-          lead.status.toUpperCase()
-        ) && !leadIdsWithVisit.has(lead.leadId)
+        [
+          "CONTACTED",
+          "SITE_VISIT_REQUIRED",
+          "SITE_VISIT_SCHEDULED",
+        ].includes(lead.status.toUpperCase()) &&
+        !leadIdsWithActiveVisit.has(Number(lead.leadId))
     );
   }, [leads, siteVisits]);
 
-  function openScheduleForm() {
+  function openScheduleForm(preselectedLeadId?: number) {
     setFormError("");
-    setShowForm(true);
 
-    if (!leadId && eligibleLeads.length > 0) {
-      setLeadId(String(eligibleLeads[0].leadId));
+    if (preselectedLeadId !== undefined) {
+      setLeadId(String(preselectedLeadId));
+    } else if (
+      !leadId ||
+      !eligibleLeads.some(
+        (lead) => String(lead.leadId) === leadId
+      )
+    ) {
+      setLeadId(
+        eligibleLeads.length > 0
+          ? String(eligibleLeads[0].leadId)
+          : ""
+      );
     }
+
+    setShowForm(true);
 
     if (!scheduledAt) {
       const next = new Date(Date.now() + 60 * 60 * 1000);
@@ -131,16 +152,12 @@ function SiteVisitsPage() {
     switch (status.toUpperCase()) {
       case "SCHEDULED":
         return "status-site";
-      case "CONFIRMED":
-        return "status-qualified";
       case "IN_PROGRESS":
         return "status-quotation";
       case "COMPLETED":
         return "status-converted";
       case "CANCELLED":
         return "status-lost";
-      case "RESCHEDULED":
-        return "status-quotation";
       default:
         return "status-default";
     }
@@ -308,9 +325,7 @@ function SiteVisitsPage() {
           <span>Scheduled</span>
           <strong>
             {siteVisits.filter((visit) =>
-              ["SCHEDULED", "CONFIRMED", "RESCHEDULED"].includes(
-                visit.status.toUpperCase()
-              )
+              visit.status.toUpperCase() === "SCHEDULED"
             ).length}
           </strong>
         </div>
@@ -459,10 +474,7 @@ function SiteVisitsPage() {
                       <button
                         type="button"
                         className="site-view-button"
-                        onClick={() => {
-                          setLeadId(String(lead.leadId));
-                          openScheduleForm();
-                        }}
+                        onClick={() => openScheduleForm(lead.leadId)}
                       >
                         Schedule
                       </button>
@@ -603,11 +615,10 @@ function SiteVisitsPage() {
             </div>
 
             <div className="site-form-actions site-detail-actions">
-              {selectedStatus === "SCHEDULED" || selectedStatus === "CONFIRMED" || selectedStatus === "RESCHEDULED" ? (
+              {selectedStatus === "SCHEDULED" ? (
                 <>
                   <button type="button" className="secondary-button" onClick={() => changeVisitStatus("CANCELLED")} disabled={saving}>Cancel Visit</button>
                   <button type="button" className="secondary-button" onClick={() => changeVisitStatus("IN_PROGRESS")} disabled={saving}>Start Visit</button>
-                  <button type="button" className="primary-button" onClick={() => saveVisitDetails(true)} disabled={saving}>{saving ? "Saving..." : "Save & Complete Visit"}</button>
                 </>
               ) : selectedStatus === "IN_PROGRESS" ? (
                 <>
