@@ -52,6 +52,7 @@ public class SiteVisitsController : ControllerBase
 
                 siteCondition = v.SiteCondition,
                 measurements = v.Measurements,
+                inspectionDataJson = v.InspectionDataJson,
                 customerNotes = v.CustomerNotes,
                 internalNotes = v.InternalNotes,
 
@@ -159,6 +160,7 @@ public async Task<IActionResult> UpdateSiteVisitStatus(
 
         siteVisit.SiteCondition = request.SiteCondition;
         siteVisit.Measurements = request.Measurements;
+        siteVisit.InspectionDataJson = request.InspectionDataJson;
         siteVisit.CustomerNotes = request.CustomerNotes;
         siteVisit.InternalNotes = request.InternalNotes;
         siteVisit.UpdatedAt = DateTime.Now;
@@ -173,6 +175,7 @@ public async Task<IActionResult> UpdateSiteVisitStatus(
             status = siteVisit.Status,
             siteCondition = siteVisit.SiteCondition,
             measurements = siteVisit.Measurements,
+            inspectionDataJson = siteVisit.InspectionDataJson,
             customerNotes = siteVisit.CustomerNotes,
             internalNotes = siteVisit.InternalNotes,
             updatedAt = siteVisit.UpdatedAt
@@ -215,6 +218,7 @@ public async Task<IActionResult> UpdateSiteVisitStatus(
 
                 siteCondition = v.SiteCondition,
                 measurements = v.Measurements,
+                inspectionDataJson = v.InspectionDataJson,
                 customerNotes = v.CustomerNotes,
                 internalNotes = v.InternalNotes,
 
