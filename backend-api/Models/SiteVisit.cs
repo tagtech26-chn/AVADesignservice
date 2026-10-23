@@ -21,6 +21,9 @@ public partial class SiteVisit
 
     public string? Measurements { get; set; }
 
+    // Structured customer-specific inspection responses stored as JSON.
+    public string? InspectionDataJson { get; set; }
+
     public string? CustomerNotes { get; set; }
 
     public string? InternalNotes { get; set; }
