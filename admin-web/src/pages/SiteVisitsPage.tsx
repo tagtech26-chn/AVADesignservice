@@ -311,7 +311,7 @@ function SiteVisitsPage() {
           <p>Schedule and manage site inspections linked to customer leads.</p>
         </div>
 
-        <button className="primary-button module-action" onClick={openScheduleForm}>
+        <button className="primary-button module-action" onClick={() => openScheduleForm()}>
           + Schedule Site Visit
         </button>
       </div>
@@ -359,7 +359,7 @@ function SiteVisitsPage() {
             <p>Select a customer enquiry for a site visit.</p>
             <button
               className="primary-button"
-              onClick={openScheduleForm}
+              onClick={() => openScheduleForm()}
               disabled={eligibleLeads.length === 0}
             >
               + Schedule Site Visit
